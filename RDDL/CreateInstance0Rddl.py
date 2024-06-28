@@ -1,4 +1,3 @@
-import csv
 import pandas as pd
 
 firstStockDataFilePath = 'StocksData/S&P500_Data.csv'
