@@ -1,0 +1,27 @@
+non-fluents twoNegetiveCorrelatedStocks {
+    domain = STOCK_model;
+
+    objects {
+        time         : {$timesList};
+        stock1Opens  : {$stock1OpensList};
+        stock2Opens  : {$stock2OpensList};
+        stock1Closes : {$stock1ClosesList};
+        stock2Closes : {$stock2ClosesList};
+
+    };
+
+    non-fluents {
+        // time delay properties
+        TIME-HEAD(t0)           = true;
+        {$timeTailString}
+        {$nextTimeBools}
+    };
+}
+
+instance twoNegetiveCorrelatedStocks_instance0 {
+    domain = STOCK_model;
+    non-fluents = twoNegetiveCorrelatedStocks;
+    max-nondef-actions = pos-inf;
+    horizon = 200;
+    discount = 1.0;
+}
