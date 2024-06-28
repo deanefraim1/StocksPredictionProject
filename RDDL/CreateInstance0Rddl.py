@@ -2,9 +2,11 @@ import pandas as pd
 
 firstStockDataFilePath = 'StocksData/S&P500_Data.csv'
 secondStockDataFilePath = 'StocksData/S&P500_Data copy.csv'
+
 OpenPricesColumnName = 'Open'
 ClosePricesColumnName = 'Close/Last'
-DateColumnName = 'Close/Last'
+DateColumnName = 'Date'
+
 TemplateInstanceFilePath = 'RDDL/Instance0_Template.rddl'
 InstanceFilePath = 'RDDL/Instance0.rddl'
 
@@ -22,14 +24,14 @@ def ReadFile(file):
     return pd.read_csv(file)
 
 def RearangeDataToAllign(stock1FileData: pd.DataFrame, stock2FileData: pd.DataFrame):
-    stock1FileData['Date'] = pd.to_datetime(stock1FileData['Date'])
-    stock2FileData['Date'] = pd.to_datetime(stock2FileData['Date'])
+    stock1FileData[DateColumnName] = pd.to_datetime(stock1FileData[DateColumnName])
+    stock2FileData[DateColumnName] = pd.to_datetime(stock2FileData[DateColumnName])
 
-    startDate = min(stock1FileData['Date'].head(1).item(), stock2FileData['Date'].head(1).item())
-    endDate = max(stock1FileData['Date'].tail(1).item(), stock2FileData['Date'].tail(1).item())
+    startDate = min(stock1FileData[DateColumnName].head(1).item(), stock2FileData[DateColumnName].head(1).item())
+    endDate = max(stock1FileData[DateColumnName].tail(1).item(), stock2FileData[DateColumnName].tail(1).item())
 
-    stock1FileData_filtered = stock1FileData[(stock1FileData['Date'] <= startDate) & (stock1FileData['Date'] >= endDate)]
-    stock2FileData_filtered = stock2FileData[(stock2FileData['Date'] <= startDate) & (stock2FileData['Date'] >= endDate)]
+    stock1FileData_filtered = stock1FileData[(stock1FileData[DateColumnName] <= startDate) & (stock1FileData[DateColumnName] >= endDate)]
+    stock2FileData_filtered = stock2FileData[(stock2FileData[DateColumnName] <= startDate) & (stock2FileData[DateColumnName] >= endDate)]
 
     return stock1FileData_filtered, stock2FileData_filtered
 
