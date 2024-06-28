@@ -3,11 +3,8 @@ non-fluents twoNegetiveCorrelatedStocks {
 
     objects {
         time         : {$timesList};
-        stock1Opens  : {$stock1OpensList};
-        stock2Opens  : {$stock2OpensList};
-        stock1Closes : {$stock1ClosesList};
-        stock2Closes : {$stock2ClosesList};
-
+        stock1Prices  : {$stock1PricesList};
+        stock2Prices  : {$stock2PricesList};
     };
 
     non-fluents {

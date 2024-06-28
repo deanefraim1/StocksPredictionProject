@@ -1,20 +1,18 @@
 import pandas as pd
+import yfinance as yf
 
-firstStockDataFilePath = 'StocksData/S&P500_Data.csv'
-secondStockDataFilePath = 'StocksData/S&P500_Data copy.csv'
+firstStockSymbol = "AAPL"
+secondStockSymbol = "MSFT"
 
-OpenPricesColumnName = 'Open'
-ClosePricesColumnName = 'Close/Last'
-DateColumnName = 'Date'
+startDate = "2020-01-01"
+endDate = "2021-01-01"
 
 TemplateInstanceFilePath = 'RDDL/Instance0_Template.rddl'
 InstanceFilePath = 'RDDL/Instance0.rddl'
 
 RddlTimesVar = "{$timesList}"
-RddlStock1OpenPricesVar = "{$stock1OpensList}"
-RddlStock1ClosePricesVar = "{$stock1ClosesList}"
-RddlStock2OpenPricesVar = "{$stock2OpensList}"
-RddlStock2ClosePricesVar = "{$stock2ClosesList}"
+RddlStock1PricesVar = "{$stock1PricesList}"
+RddlStock2PricesVar = "{$stock2PricesList}"
 RddlNextTimeBoolsVar = "{$nextTimeBools}"
 RddlTimeTailVar = "{$timeTailString}"
 
@@ -22,18 +20,6 @@ RddlTimeTailVar = "{$timeTailString}"
 
 def ReadFile(file):
     return pd.read_csv(file)
-
-def RearangeDataToAllign(stock1FileData: pd.DataFrame, stock2FileData: pd.DataFrame):
-    stock1FileData[DateColumnName] = pd.to_datetime(stock1FileData[DateColumnName])
-    stock2FileData[DateColumnName] = pd.to_datetime(stock2FileData[DateColumnName])
-
-    startDate = min(stock1FileData[DateColumnName].head(1).item(), stock2FileData[DateColumnName].head(1).item())
-    endDate = max(stock1FileData[DateColumnName].tail(1).item(), stock2FileData[DateColumnName].tail(1).item())
-
-    stock1FileData_filtered = stock1FileData[(stock1FileData[DateColumnName] <= startDate) & (stock1FileData[DateColumnName] >= endDate)]
-    stock2FileData_filtered = stock2FileData[(stock2FileData[DateColumnName] <= startDate) & (stock2FileData[DateColumnName] >= endDate)]
-
-    return stock1FileData_filtered, stock2FileData_filtered
 
 
 def GetNumberOfRows(fileData: pd.DataFrame):
@@ -47,14 +33,11 @@ def CreateTimesListString(fileData: pd.DataFrame): # create a string of {t0, t1,
     timesListString = timesListString[:-2] + "}"
     return timesListString
 
-def CreateOpenPricesListString(fileData: pd.DataFrame): # create a string of {openPrice0, openPrice1, openPrice2, ..., openPriceN}
-    open_prices = fileData[OpenPricesColumnName]
-    concatenated_string = '{' + ', '.join(map(str, open_prices)) + '}'
-    return concatenated_string
-
-def CreateClosePricesListString(fileData: pd.DataFrame): # create a string of {closePrice0, closePrice1, closePrice2, ..., closePriceN}
-    close_prices = fileData[ClosePricesColumnName]
-    concatenated_string = '{' + ', '.join(map(str, close_prices)) + '}'
+def CreatePricesListString(fileData: pd.DataFrame): # create a string of {price0, price1, price2, ..., priceN}
+    open_prices = fileData['Open']
+    close_prices = fileData['Close']
+    avg_prices = ((open_prices + close_prices) / 2).round(3)
+    concatenated_string = '{' + ', '.join(map(str, avg_prices)) + '}'
     return concatenated_string
 
 def CreateNextTimeBoolsString(file: pd.DataFrame): # create a string of NEXT(t0, t1) newLine NEXT(t1, t2) newLine ... NEXT(tN-1, tN)
@@ -73,10 +56,8 @@ def GenerateRddlFromStockData(rddlTemplateFilePath, firstStockData: pd.DataFrame
     rddlTemplate = rddlTemplateFile.read()
     rddlTemplateFile.close()
     rddlTemplate = rddlTemplate.replace(RddlTimesVar, CreateTimesListString(firstStockData))
-    rddlTemplate = rddlTemplate.replace(RddlStock1OpenPricesVar, CreateOpenPricesListString(firstStockData))
-    rddlTemplate = rddlTemplate.replace(RddlStock2OpenPricesVar, CreateOpenPricesListString(secondStockData))
-    rddlTemplate = rddlTemplate.replace(RddlStock1ClosePricesVar, CreateClosePricesListString(firstStockData))
-    rddlTemplate = rddlTemplate.replace(RddlStock2ClosePricesVar, CreateClosePricesListString(secondStockData))
+    rddlTemplate = rddlTemplate.replace(RddlStock1PricesVar, CreatePricesListString(firstStockData))
+    rddlTemplate = rddlTemplate.replace(RddlStock2PricesVar, CreatePricesListString(secondStockData))
     rddlTemplate = rddlTemplate.replace(RddlNextTimeBoolsVar, CreateNextTimeBoolsString(firstStockData))
     rddlTemplate = rddlTemplate.replace(RddlTimeTailVar, CreateTimeTailstring(firstStockData))
 
@@ -85,8 +66,7 @@ def GenerateRddlFromStockData(rddlTemplateFilePath, firstStockData: pd.DataFrame
     rddlFile.close()
 
 
-firstStockFileData = ReadFile(firstStockDataFilePath)
-secondStockFileData = ReadFile(secondStockDataFilePath)
-firstStockFileData, secondStockFileData = RearangeDataToAllign(firstStockFileData, secondStockFileData)
+firstStockData = yf.download(firstStockSymbol, start=startDate, end=endDate)
+secondStockData = yf.download(secondStockSymbol, start=startDate, end=endDate)
 
-GenerateRddlFromStockData(TemplateInstanceFilePath, firstStockFileData, secondStockFileData, InstanceFilePath)
+GenerateRddlFromStockData(TemplateInstanceFilePath, firstStockData, secondStockData, InstanceFilePath)
