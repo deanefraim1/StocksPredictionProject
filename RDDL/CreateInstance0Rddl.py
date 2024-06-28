@@ -1,11 +1,11 @@
 import pandas as pd
 import yfinance as yf
 
-firstStockSymbol = "AAPL"
-secondStockSymbol = "MSFT"
+firstStockSymbol = "UPRO"
+secondStockSymbol = "TMF"
 
-startDate = "2020-01-01"
-endDate = "2021-01-01"
+startDate = "2000-01-01"
+endDate = pd.to_datetime('today').strftime('%Y-%m-%d')
 
 TemplateInstanceFilePath = 'RDDL/Instance0_Template.rddl'
 InstanceFilePath = 'RDDL/Instance0.rddl'
@@ -68,5 +68,7 @@ def GenerateRddlFromStockData(rddlTemplateFilePath, firstStockData: pd.DataFrame
 
 firstStockData = yf.download(firstStockSymbol, start=startDate, end=endDate)
 secondStockData = yf.download(secondStockSymbol, start=startDate, end=endDate)
+print(firstStockData)
+print(secondStockData)
 
 GenerateRddlFromStockData(TemplateInstanceFilePath, firstStockData, secondStockData, InstanceFilePath)
