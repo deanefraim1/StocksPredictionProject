@@ -5,6 +5,7 @@ firstStockDataFilePath = 'StocksData/S&P500_Data.csv'
 secondStockDataFilePath = 'StocksData/S&P500_Data copy.csv'
 OpenPricesColumnName = 'Open'
 ClosePricesColumnName = 'Close/Last'
+DateColumnName = 'Close/Last'
 TemplateInstanceFilePath = 'RDDL/Instance0_Template.rddl'
 InstanceFilePath = 'RDDL/Instance0.rddl'
 
@@ -20,6 +21,19 @@ RddlTimeTailVar = "{$timeTailString}"
 
 def ReadFile(file):
     return pd.read_csv(file)
+
+def RearangeDataToAllign(stock1FileData: pd.DataFrame, stock2FileData: pd.DataFrame):
+    stock1FileData['Date'] = pd.to_datetime(stock1FileData['Date'])
+    stock2FileData['Date'] = pd.to_datetime(stock2FileData['Date'])
+
+    startDate = min(stock1FileData['Date'].head(1).item(), stock2FileData['Date'].head(1).item())
+    endDate = max(stock1FileData['Date'].tail(1).item(), stock2FileData['Date'].tail(1).item())
+
+    stock1FileData_filtered = stock1FileData[(stock1FileData['Date'] <= startDate) & (stock1FileData['Date'] >= endDate)]
+    stock2FileData_filtered = stock2FileData[(stock2FileData['Date'] <= startDate) & (stock2FileData['Date'] >= endDate)]
+
+    return stock1FileData_filtered, stock2FileData_filtered
+
 
 def GetNumberOfRows(fileData: pd.DataFrame):
     return len(fileData) - 1 # -1 because the first row is the header
@@ -71,6 +85,7 @@ def GenerateRddlFromStockData(rddlTemplateFilePath, firstStockData: pd.DataFrame
 
 
 firstStockFileData = ReadFile(firstStockDataFilePath)
-secondStockFileData = ReadFile(firstStockDataFilePath)
+secondStockFileData = ReadFile(secondStockDataFilePath)
+firstStockFileData, secondStockFileData = RearangeDataToAllign(firstStockFileData, secondStockFileData)
 
 GenerateRddlFromStockData(TemplateInstanceFilePath, firstStockFileData, secondStockFileData, InstanceFilePath)
