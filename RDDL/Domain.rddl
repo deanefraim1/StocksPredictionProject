@@ -1,0 +1,91 @@
+domain STOCK_model {
+    requirements = {
+        constrained-state
+    };
+
+    types {
+        stock : object;
+        time  : object;
+    };
+
+    pvariables {
+        ///////////////////////////////////////////
+        // non-fluents == topology and geometry
+        ///////////////////////////////////////////
+
+        // time ordering for time-delayed queues
+        NEXT(time, time)                                       :  { non-fluent, bool, default = false };
+
+        // is the time index first in the queue, i,e., no delay
+        TIME-HEAD(time)                                        :  {non-fluent, bool, default = false };
+
+        // is the time index last in the queue, i,e., maximum delay memory depth
+        TIME-TAIL(time)                                        :  {non-fluent, bool, default = false };
+
+        // stock price
+        STOCK-PRICE(stock, time)                               :  { interm-fluent, real, default = 0 };
+
+
+        //////////////////////////////
+        // interm fluents
+        //////////////////////////////
+
+        // actual buying action for stock (it deoends on stock price and wallet money)
+        NominalBuy(stock)                                      :  { interm-fluent, real, default = 0 };
+
+
+        //////////////////////////////
+        // states fluents
+        //////////////////////////////
+
+        // number of shares owned
+        OwnedShares(stock)                                     :  { state-fluent, real, default = 0 };
+
+        // wallet money
+        WalletMoney()                                          :  { state-fluent, real, default = 0 };
+
+
+        //////////////////////////////
+        // action fluents
+        //////////////////////////////
+
+        // buy/sale of stock (positive for buy, negative for sale)
+        Buy(stock)                                             :  { action-fluent, real, default = 0 };
+
+
+        //////////////////////////////
+        // observation fluents
+        //////////////////////////////
+    };
+
+    cpfs {
+
+        ////////////////////////////////////
+        // interm fluents
+        ////////////////////////////////////
+        
+        // actual buying action for stock (it depends on stock price and wallet money)
+        NominalBuy(stock) = 
+
+
+        ////////////////////////////////////
+        // State space evolution
+        ////////////////////////////////////
+
+        // Number of shares owned dynamic
+        Shares'(stock) = 
+
+        // The wallet money dynamic
+        WalletMoney'() = 
+    }
+
+    reward = ( sum_{?s : stock} [ Shares(?s) *  ] ) + walletMoney;
+
+    action-preconditions {
+		
+	};
+
+    state-invariants {
+        
+	};
+}

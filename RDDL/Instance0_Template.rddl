@@ -2,9 +2,8 @@ non-fluents twoNegetiveCorrelatedStocks {
     domain = STOCK_model;
 
     objects {
+        stock         : {$stock1Name, $stock2Name};
         time         : {$timesList};
-        stock1Prices  : {$stock1PricesList};
-        stock2Prices  : {$stock2PricesList};
     };
 
     non-fluents {
@@ -12,6 +11,8 @@ non-fluents twoNegetiveCorrelatedStocks {
         TIME-HEAD(t0)           = true;
         {$timeTailString}
         {$nextTimeBools}
+        {$stock1Prices}
+        {$stock2Prices}
     };
 }
 

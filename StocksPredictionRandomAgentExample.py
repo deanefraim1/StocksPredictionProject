@@ -1,7 +1,7 @@
 import pyRDDLGym
 from pyRDDLGym.core.policy import RandomAgent
 
-domainPath = 'RDDL/Domain0.rddl'
+domainPath = 'RDDL/Domain.rddl'
 instancePath = 'RDDL/Instance0.rddl'
 
 myEnv = pyRDDLGym.make(domain=domainPath, instance=instancePath)

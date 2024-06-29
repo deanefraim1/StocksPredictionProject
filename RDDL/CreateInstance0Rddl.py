@@ -10,9 +10,11 @@ endDate = pd.to_datetime('today').strftime('%Y-%m-%d')
 TemplateInstanceFilePath = 'RDDL/Instance0_Template.rddl'
 InstanceFilePath = 'RDDL/Instance0.rddl'
 
+stock1SymbolVar = "stock1Symbol"
+stock2SymbolVar = "stock2Symbol"
 RddlTimesVar = "{$timesList}"
-RddlStock1PricesVar = "{$stock1PricesList}"
-RddlStock2PricesVar = "{$stock2PricesList}"
+RddlStock1PricesVar = "{$stock1Prices}"
+RddlStock2PricesVar = "{$stock2Prices}"
 RddlNextTimeBoolsVar = "{$nextTimeBools}"
 RddlTimeTailVar = "{$timeTailString}"
 
@@ -33,12 +35,14 @@ def CreateTimesListString(fileData: pd.DataFrame): # create a string of {t0, t1,
     timesListString = timesListString[:-2] + "}"
     return timesListString
 
-def CreatePricesListString(fileData: pd.DataFrame): # create a string of {price0, price1, price2, ..., priceN}
+def CreatePricesList(fileData: pd.DataFrame, stockName): # create a string of {price0, price1, price2, ..., priceN}
     open_prices = fileData['Open']
     close_prices = fileData['Close']
     avg_prices = ((open_prices + close_prices) / 2).round(3)
-    concatenated_string = '{' + ', '.join(map(str, avg_prices)) + '}'
-    return concatenated_string
+    nextTimeBoolsString = ""
+    for i in range(len(avg_prices) - 1):
+        nextTimeBoolsString += "STOCK-PRICE(" + stockName + ", t" + str(i) + ")" + "           = " + str(avg_prices.iloc[i]) + ";\n        "
+    return nextTimeBoolsString
 
 def CreateNextTimeBoolsString(file: pd.DataFrame): # create a string of NEXT(t0, t1) newLine NEXT(t1, t2) newLine ... NEXT(tN-1, tN)
     NumberOfRows = GetNumberOfRows(file)
@@ -55,9 +59,11 @@ def GenerateRddlFromStockData(rddlTemplateFilePath, firstStockData: pd.DataFrame
     rddlTemplateFile = open(rddlTemplateFilePath, 'r')
     rddlTemplate = rddlTemplateFile.read()
     rddlTemplateFile.close()
+    rddlTemplate = rddlTemplate.replace(stock1SymbolVar, firstStockSymbol)
+    rddlTemplate = rddlTemplate.replace(stock2SymbolVar, secondStockSymbol)
     rddlTemplate = rddlTemplate.replace(RddlTimesVar, CreateTimesListString(firstStockData))
-    rddlTemplate = rddlTemplate.replace(RddlStock1PricesVar, CreatePricesListString(firstStockData))
-    rddlTemplate = rddlTemplate.replace(RddlStock2PricesVar, CreatePricesListString(secondStockData))
+    rddlTemplate = rddlTemplate.replace(RddlStock1PricesVar, CreatePricesList(firstStockData, firstStockSymbol))
+    rddlTemplate = rddlTemplate.replace(RddlStock2PricesVar, CreatePricesList(secondStockData, secondStockSymbol))
     rddlTemplate = rddlTemplate.replace(RddlNextTimeBoolsVar, CreateNextTimeBoolsString(firstStockData))
     rddlTemplate = rddlTemplate.replace(RddlTimeTailVar, CreateTimeTailstring(firstStockData))
 
@@ -68,7 +74,5 @@ def GenerateRddlFromStockData(rddlTemplateFilePath, firstStockData: pd.DataFrame
 
 firstStockData = yf.download(firstStockSymbol, start=startDate, end=endDate)
 secondStockData = yf.download(secondStockSymbol, start=startDate, end=endDate)
-print(firstStockData)
-print(secondStockData)
 
 GenerateRddlFromStockData(TemplateInstanceFilePath, firstStockData, secondStockData, InstanceFilePath)
