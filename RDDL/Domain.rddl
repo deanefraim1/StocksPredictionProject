@@ -68,7 +68,7 @@ domain STOCK_model {
 
     }
 
-    reward = ( sum_{?s : stock} [ Shares(?s) * STOCK-PRICE(?s, time)  ] );
+    reward = ( sum_{?s : stock} [ Shares'(?s) * (STOCK-PRICE(?s, time) - STOCK-PRICE(?s, time-1))  ] );
 
     action-preconditions {
 		forall_{?s1 : stock, ?s2 : stock} [ Transfer(?s1, ?s2) >= Shares(?s1) ];
