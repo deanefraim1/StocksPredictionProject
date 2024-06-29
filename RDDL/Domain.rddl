@@ -36,7 +36,7 @@ domain STOCK_model {
         //////////////////////////////
 
         // number of shares owned
-        Shares(stock)                                     :  { state-fluent, real, default = 0 };
+        Shares(stock)                                          :  { state-fluent, real, default = 0 };
 
 
         //////////////////////////////
@@ -44,7 +44,7 @@ domain STOCK_model {
         //////////////////////////////
 
         // amount of shares to transfer
-        Transfer(stock, stock)                                             :  { action-fluent, real, default = 0 };
+        Transfer(stock, stock)                                 :  { action-fluent, real, default = 0 };
 
 
         //////////////////////////////
@@ -53,7 +53,6 @@ domain STOCK_model {
     };
 
     cpfs {
-
         ////////////////////////////////////
         // interm fluents
         ////////////////////////////////////
@@ -65,10 +64,9 @@ domain STOCK_model {
 
         // Number of shares owned dynamic
         Shares'(stock) = Shares(stock) + sum_{?s : stock} [ (Transfer(?s, stock) * STOCK-PRICE(?s, time))/STOCK-PRICE(?s, time) - (Transfer(stock, ?s) * STOCK-PRICE(stock, time))/STOCK-PRICE(?s, time) ];
-
     }
 
-    reward = ( sum_{?s : stock} [ Shares'(?s) * (STOCK-PRICE(?s, time) - STOCK-PRICE(?s, time-1))  ] );
+    reward = ( sum_{?s : stock} [ Shares'(?s) * (STOCK-PRICE(?s, time) - STOCK-PRICE(?s, time-1)) ] );
 
     action-preconditions {
 		forall_{?s1 : stock, ?s2 : stock} [ Transfer(?s1, ?s2) >= Shares(?s1) ];

@@ -4,14 +4,19 @@ import yfinance as yf
 firstStockSymbol = "UPRO"
 secondStockSymbol = "TMF"
 
+stock1InitAmount = 100
+stock2InitAmount = 100
+
 startDate = "2000-01-01"
 endDate = pd.to_datetime('today').strftime('%Y-%m-%d')
 
 TemplateInstanceFilePath = 'RDDL/Instance0_Template.rddl'
 InstanceFilePath = 'RDDL/Instance0.rddl'
 
-stock1SymbolVar = "stock1Symbol"
-stock2SymbolVar = "stock2Symbol"
+stock1SymbolVar = "$stock1Symbol"
+stock2SymbolVar = "$stock2Symbol"
+stock1InitAmountVar = "$stock1InitAmount"
+stock2InitAmountVar = "$stock2InitAmount"
 RddlTimesVar = "{$timesList}"
 RddlStock1PricesVar = "{$stock1Prices}"
 RddlStock2PricesVar = "{$stock2Prices}"
@@ -59,8 +64,10 @@ def GenerateRddlFromStockData(rddlTemplateFilePath, firstStockData: pd.DataFrame
     rddlTemplateFile = open(rddlTemplateFilePath, 'r')
     rddlTemplate = rddlTemplateFile.read()
     rddlTemplateFile.close()
-    rddlTemplate = rddlTemplate.replace(stock1SymbolVar, firstStockSymbol)
-    rddlTemplate = rddlTemplate.replace(stock2SymbolVar, secondStockSymbol)
+    rddlTemplate = rddlTemplate.replace(stock1SymbolVar, firstStockSymbol, 2)
+    rddlTemplate = rddlTemplate.replace(stock2SymbolVar, secondStockSymbol, 2)
+    rddlTemplate = rddlTemplate.replace(stock1InitAmountVar, str(stock1InitAmount))
+    rddlTemplate = rddlTemplate.replace(stock2InitAmountVar, str(stock2InitAmount))
     rddlTemplate = rddlTemplate.replace(RddlTimesVar, CreateTimesListString(firstStockData))
     rddlTemplate = rddlTemplate.replace(RddlStock1PricesVar, CreatePricesList(firstStockData, firstStockSymbol))
     rddlTemplate = rddlTemplate.replace(RddlStock2PricesVar, CreatePricesList(secondStockData, secondStockSymbol))

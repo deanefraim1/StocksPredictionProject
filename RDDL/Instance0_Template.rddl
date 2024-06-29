@@ -2,7 +2,7 @@ non-fluents twoNegetiveCorrelatedStocks {
     domain = STOCK_model;
 
     objects {
-        stock         : {$stock1Name, $stock2Name};
+        stock         : {$stock1Symbol, $stock2Symbol};
         time         : {$timesList};
     };
 
@@ -20,6 +20,10 @@ instance twoNegetiveCorrelatedStocks_instance0 {
     domain = STOCK_model;
     non-fluents = twoNegetiveCorrelatedStocks;
     max-nondef-actions = pos-inf;
+    init-state{
+		Shares($stock1Symbol) = $stock1InitAmount;
+		Shares($stock2Symbol) = $stock2InitAmount;
+	};
     horizon = 200;
     discount = 1.0;
 }
