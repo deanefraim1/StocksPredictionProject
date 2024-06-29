@@ -30,27 +30,21 @@ domain STOCK_model {
         // interm fluents
         //////////////////////////////
 
-        // actual buying action for stock (it deoends on stock price and wallet money)
-        NominalBuy(stock)                                      :  { interm-fluent, real, default = 0 };
-
 
         //////////////////////////////
         // states fluents
         //////////////////////////////
 
         // number of shares owned
-        OwnedShares(stock)                                     :  { state-fluent, real, default = 0 };
-
-        // wallet money
-        WalletMoney()                                          :  { state-fluent, real, default = 0 };
+        Shares(stock)                                     :  { state-fluent, real, default = 0 };
 
 
         //////////////////////////////
         // action fluents
         //////////////////////////////
 
-        // buy/sale of stock (positive for buy, negative for sale)
-        Buy(stock)                                             :  { action-fluent, real, default = 0 };
+        // amount of shares to transfer
+        Transfer(stock, stock)                                             :  { action-fluent, real, default = 0 };
 
 
         //////////////////////////////
@@ -63,9 +57,6 @@ domain STOCK_model {
         ////////////////////////////////////
         // interm fluents
         ////////////////////////////////////
-        
-        // actual buying action for stock (it depends on stock price and wallet money)
-        NominalBuy(stock) = 
 
 
         ////////////////////////////////////
@@ -73,19 +64,20 @@ domain STOCK_model {
         ////////////////////////////////////
 
         // Number of shares owned dynamic
-        Shares'(stock) = 
+        Shares'(stock) = Shares(stock) + sum_{?s : stock} [ (Transfer(?s, stock) * STOCK-PRICE(?s, time))/STOCK-PRICE(?s, time) - (Transfer(stock, ?s) * STOCK-PRICE(stock, time))/STOCK-PRICE(?s, time) ];
 
-        // The wallet money dynamic
-        WalletMoney'() = 
     }
 
-    reward = ( sum_{?s : stock} [ Shares(?s) *  ] ) + walletMoney;
+    reward = ( sum_{?s : stock} [ Shares(?s) * STOCK-PRICE(?s, time)  ] );
 
     action-preconditions {
 		
 	};
 
     state-invariants {
-        
+        forall_{?s : stock} [ Shares(?s) >= 0 ];
+        forall_{?s : stock, ?t : time} [ STOCK-PRICE(?s, ?t) >= 0 ];
+        forall_{?s : stock} [ Shares(?s) >= 0 ];
+        forall_{?s1 : stock, ?s2 : stock} [ Transfer(?s1, ?s2) >= Shares(?s1) ];
 	};
 }
