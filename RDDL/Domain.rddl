@@ -71,13 +71,12 @@ domain STOCK_model {
     reward = ( sum_{?s : stock} [ Shares(?s) * STOCK-PRICE(?s, time)  ] );
 
     action-preconditions {
-		
+		forall_{?s1 : stock, ?s2 : stock} [ Transfer(?s1, ?s2) >= Shares(?s1) ];
 	};
 
     state-invariants {
         forall_{?s : stock} [ Shares(?s) >= 0 ];
         forall_{?s : stock, ?t : time} [ STOCK-PRICE(?s, ?t) >= 0 ];
         forall_{?s : stock} [ Shares(?s) >= 0 ];
-        forall_{?s1 : stock, ?s2 : stock} [ Transfer(?s1, ?s2) >= Shares(?s1) ];
 	};
 }
