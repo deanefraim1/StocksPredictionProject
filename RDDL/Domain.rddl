@@ -5,7 +5,6 @@ domain STOCK_model {
 
     types {
         stock : object;
-        time  : object;
     };
 
     pvariables {
@@ -13,17 +12,17 @@ domain STOCK_model {
         // non-fluents == topology and geometry
         ///////////////////////////////////////////
 
-        // time ordering for time-delayed queues
-        NEXT(time, time)                                       :  { non-fluent, bool, default = false };
-
-        // is the time index first in the queue, i,e., no delay
-        TIME-HEAD(time)                                        :  {non-fluent, bool, default = false };
-
         // is the time index last in the queue, i,e., maximum delay memory depth
-        TIME-TAIL(time)                                        :  {non-fluent, bool, default = false };
+        IS-FINAL-TIME(int time)                                    :  {non-fluent, bool, default = false };
 
         // stock price
-        STOCK-PRICE(stock, time)                               :  { interm-fluent, real, default = 0 };
+        STOCK-PRICE(stock, int time)                               :  { non-fluent, real, default = 0 };
+
+        //Commission rate
+        COMMISION-RATE()                                           :  { non-fluent, real, default = 0.01 };
+
+        // Buy/Sell Commission
+        Commition(real price)                                      :  { interm-fluent, real, default = 0 };
 
 
         //////////////////////////////
@@ -35,8 +34,11 @@ domain STOCK_model {
         // states fluents
         //////////////////////////////
 
+        // current time
+        CurrentTime()                                              :  { state-fluent, int, default = 0 };
+
         // number of shares owned
-        Shares(stock)                                          :  { state-fluent, real, default = 0 };
+        Shares(stock)                                              :  { state-fluent, real, default = 0 };
 
 
         //////////////////////////////
@@ -44,7 +46,7 @@ domain STOCK_model {
         //////////////////////////////
 
         // amount of shares to transfer
-        Transfer(stock, stock)                                 :  { action-fluent, real, default = 0 };
+        Transfer(stock, stock)                                     :  { action-fluent, real, default = 0 };
 
 
         //////////////////////////////
@@ -57,24 +59,32 @@ domain STOCK_model {
         // interm fluents
         ////////////////////////////////////
 
+        // Buy/Sell Commission
+        Commition(int price) = COMMISION-RATE() * price;
+
 
         ////////////////////////////////////
         // State space evolution
         ////////////////////////////////////
 
+        // Time evolution
+        CurrentTime'() = CurrentTime() + 1;
+
         // Number of shares owned dynamic
-        Shares'(stock) = Shares(stock) + sum_{?s : stock} [ (Transfer(?s, stock) * STOCK-PRICE(?s, time))/STOCK-PRICE(?s, time) - (Transfer(stock, ?s) * STOCK-PRICE(stock, time))/STOCK-PRICE(?s, time) ];
+        Shares'(stock) = Shares(stock) + sum_{?s : stock} [ ((Transfer(?s, stock) * STOCK-PRICE(?s, CurrentTime()))/STOCK-PRICE(stock, CurrentTime())
+                                                             - 2 * Commission(Transfer(?s, stock) * STOCK-PRICE(?s, CurrentTime())))
+                                                            - ((Transfer(stock, ?s) * STOCK-PRICE(stock, CurrentTime()))/STOCK-PRICE(?s, CurrentTime())
+                                                               - 2 * Commission(Transfer(stock, ?s) * STOCK-PRICE(stock, CurrentTime()))) ];
     }
 
-    reward = ( sum_{?s : stock} [ Shares'(?s) * (STOCK-PRICE(?s, time) - STOCK-PRICE(?s, time-1)) ] );
+    reward = ( sum_{?s : stock} [ Shares'(?s) * (STOCK-PRICE(?s, CurrentTime'()) - STOCK-PRICE(?s, CurrentTime())) ] );
 
     action-preconditions {
-		forall_{?s1 : stock, ?s2 : stock} [ Transfer(?s1, ?s2) >= Shares(?s1) ];
+		forall_{?s1 : stock, ?s2 : stock} [ Transfer(?s1, ?s2) <= Shares(?s1) ];
 	};
 
     state-invariants {
         forall_{?s : stock} [ Shares(?s) >= 0 ];
-        forall_{?s : stock, ?t : time} [ STOCK-PRICE(?s, ?t) >= 0 ];
-        forall_{?s : stock} [ Shares(?s) >= 0 ];
+        forall_{?s : stock, ?t : int} [ STOCK-PRICE(?s, ?t) >= 0 ];
 	};
 }

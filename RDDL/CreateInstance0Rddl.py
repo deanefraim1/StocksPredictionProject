@@ -17,11 +17,9 @@ stock1SymbolVar = "$stock1Symbol"
 stock2SymbolVar = "$stock2Symbol"
 stock1InitAmountVar = "$stock1InitAmount"
 stock2InitAmountVar = "$stock2InitAmount"
-RddlTimesVar = "{$timesList}"
 RddlStock1PricesVar = "{$stock1Prices}"
 RddlStock2PricesVar = "{$stock2Prices}"
-RddlNextTimeBoolsVar = "{$nextTimeBools}"
-RddlTimeTailVar = "{$timeTailString}"
+RddlFinalTimeVar = "$finalTime"
 
 
 
@@ -32,33 +30,14 @@ def ReadFile(file):
 def GetNumberOfRows(fileData: pd.DataFrame):
     return len(fileData) - 1 # -1 because the first row is the header
 
-def CreateTimesListString(fileData: pd.DataFrame): # create a string of {t0, t1, t2, ..., tN}
-    NumberOfRows = GetNumberOfRows(fileData)
-    timesListString = "{"
-    for i in range(NumberOfRows):
-        timesListString += "t" + str(i) + ", "
-    timesListString = timesListString[:-2] + "}"
-    return timesListString
-
 def CreatePricesList(fileData: pd.DataFrame, stockName): # create a string of {price0, price1, price2, ..., priceN}
     open_prices = fileData['Open']
     close_prices = fileData['Close']
     avg_prices = ((open_prices + close_prices) / 2).round(3)
     nextTimeBoolsString = ""
     for i in range(len(avg_prices) - 1):
-        nextTimeBoolsString += "STOCK-PRICE(" + stockName + ", t" + str(i) + ")" + "           = " + str(avg_prices.iloc[i]) + ";\n        "
+        nextTimeBoolsString += "STOCK-PRICE(" + stockName + ", " + str(i+1) + ")" + "           = " + str(avg_prices.iloc[i]) + ";\n        "
     return nextTimeBoolsString
-
-def CreateNextTimeBoolsString(file: pd.DataFrame): # create a string of NEXT(t0, t1) newLine NEXT(t1, t2) newLine ... NEXT(tN-1, tN)
-    NumberOfRows = GetNumberOfRows(file)
-    nextTimeBoolsString = ""
-    for i in range(NumberOfRows - 1):
-        nextTimeBoolsString += "NEXT(t" + str(i) + ", t" + str(i + 1) + ")" + "           = true;\n        "
-    return nextTimeBoolsString
-
-def CreateTimeTailstring(file: pd.DataFrame): # create a string of TIME-TAIL(tN)  
-    NumberOfRows = GetNumberOfRows(file)
-    return "TIME-TAIL(t" + str(NumberOfRows) + ")" + "           = true;"
 
 def GenerateRddlFromStockData(rddlTemplateFilePath, firstStockData: pd.DataFrame, secondStockData: pd.DataFrame, instanceName): # replace {variables} with the actual values
     rddlTemplateFile = open(rddlTemplateFilePath, 'r')
@@ -68,11 +47,9 @@ def GenerateRddlFromStockData(rddlTemplateFilePath, firstStockData: pd.DataFrame
     rddlTemplate = rddlTemplate.replace(stock2SymbolVar, secondStockSymbol, 2)
     rddlTemplate = rddlTemplate.replace(stock1InitAmountVar, str(stock1InitAmount))
     rddlTemplate = rddlTemplate.replace(stock2InitAmountVar, str(stock2InitAmount))
-    rddlTemplate = rddlTemplate.replace(RddlTimesVar, CreateTimesListString(firstStockData))
     rddlTemplate = rddlTemplate.replace(RddlStock1PricesVar, CreatePricesList(firstStockData, firstStockSymbol))
     rddlTemplate = rddlTemplate.replace(RddlStock2PricesVar, CreatePricesList(secondStockData, secondStockSymbol))
-    rddlTemplate = rddlTemplate.replace(RddlNextTimeBoolsVar, CreateNextTimeBoolsString(firstStockData))
-    rddlTemplate = rddlTemplate.replace(RddlTimeTailVar, CreateTimeTailstring(firstStockData))
+    rddlTemplate = rddlTemplate.replace(RddlFinalTimeVar, str(GetNumberOfRows(firstStockData)), 2)
 
     rddlFile = open(instanceName, 'w')
     rddlFile.write(rddlTemplate)

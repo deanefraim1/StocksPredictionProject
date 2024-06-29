@@ -3,14 +3,16 @@ non-fluents twoNegetiveCorrelatedStocks {
 
     objects {
         stock         : {$stock1Symbol, $stock2Symbol};
-        time         : {$timesList};
     };
 
     non-fluents {
-        // time delay properties
-        TIME-HEAD(t0)           = true;
-        {$timeTailString}
-        {$nextTimeBools}
+        // Commission rate
+        COMMISION-RATE() = 0.01;
+
+        // time properties
+        IS-FINAL-TIME($finalTime) = true;
+
+        // stocks prices
         {$stock1Prices}
         {$stock2Prices}
     };
@@ -23,7 +25,8 @@ instance twoNegetiveCorrelatedStocks_instance0 {
     init-state{
 		Shares($stock1Symbol) = $stock1InitAmount;
 		Shares($stock2Symbol) = $stock2InitAmount;
+        CurrentTime() = 0;
 	};
-    horizon = 200;
+    horizon = $finalTime;
     discount = 1.0;
 }
