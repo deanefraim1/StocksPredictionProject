@@ -76,10 +76,10 @@ domain STOCK_model {
         ////////////////////////////////////
 
         // Buy Commission
-        BuyCommission(price) = price * BUY-COMMISSION-RATE();
+        BuyCommission(price) = price * BUY-COMMISSION-RATE;
 
         // Sell Commission
-        SellCommission(price) = price * SELL-COMMISSION-RATE();
+        SellCommission(price) = price * SELL-COMMISSION-RATE;
 
         // Total transfer Commission
         TotalCommission(price) = BuyCommission(price) + SellCommission(price);
@@ -96,8 +96,8 @@ domain STOCK_model {
         CurrentTime' = NEXT(CurrentTime);
 
         // Number of shares owned dynamic
-        Shares'(stock) = Shares(stock) + sum_{?s : stock} [ ((MoneyTransfer(?s, stock) - TotalCommission(MoneyTransfer(?s, stock)))/STOCK-PRICE(stock, CurrentTime))
-                                                            - ((MoneyTransfer(stock, ?s) - TotalCommission(MoneyTransfer(stock, ?s)))/STOCK-PRICE(?s, CurrentTime)) ];
+        Shares'(stock) = Shares(stock) + sum_{?s : stock} [ ((MoneyTransfer(?s, stock) - TotalCommission(MoneyTransfer(?s, stock)))/STOCK-PRICE(stock, CurrentTime'))
+                                                            - ((MoneyTransfer(stock, ?s) - TotalCommission(MoneyTransfer(stock, ?s)))/STOCK-PRICE(?s, CurrentTime')) ];
     };
 
     reward = sum_{?s : stock} [ Shares'(?s) * (STOCK-PRICE(?s, CurrentTime') - STOCK-PRICE(?s, CurrentTime)) ];
