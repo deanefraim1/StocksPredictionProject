@@ -5,6 +5,7 @@ domain STOCK_model {
 
     types {
         stock : object;
+        time : object;
     };
 
     pvariables {
@@ -13,21 +14,36 @@ domain STOCK_model {
         ///////////////////////////////////////////
 
         // is the time index last in the queue, i,e., maximum delay memory depth
-        IS-FINAL-TIME(int time)                                    :  {non-fluent, bool, default = false };
+        IS-FINAL-TIME(time)                                                     :  {non-fluent, bool, default = false };
 
         // stock price
-        STOCK-PRICE(stock, int time)                               :  { non-fluent, real, default = 0 };
+        STOCK-PRICE(stock, time)                                                :  { non-fluent, real, default = 0 };
 
-        //Commission rate
-        COMMISION-RATE()                                           :  { non-fluent, real, default = 0.01 };
+        // Buy Commission Rate
+        BUY-COMMISSION-RATE                                                     :  { non-fluent, real, default = 0 };
 
-        // Buy/Sell Commission
-        Commition(real price)                                      :  { interm-fluent, real, default = 0 };
+        // Sell Commission Rate
+        SELL-COMMISSION-RATE                                                    :  { non-fluent, real, default = 0 };
+
+        // Next time dynamics
+        NEXT(time)                                                              :  { non-fluent, time, default = t1 };
 
 
         //////////////////////////////
         // interm fluents
         //////////////////////////////
+
+        // Buy Commission
+        BuyCommission(price)                                                    :  { interm-fluent, real };
+
+        // Sell Commission
+        SellCommission(price)                                                   :  { interm-fluent, real };
+
+        // Toal transfer Commission
+        TotalCommission(price)                                                  :  { interm-fluent, real };
+
+        // Money from stock transfer
+        MoneyTransfer(stock, stock)                                             :  { interm-fluent, real };
 
 
         //////////////////////////////
@@ -35,10 +51,10 @@ domain STOCK_model {
         //////////////////////////////
 
         // current time
-        CurrentTime()                                              :  { state-fluent, int, default = 0 };
+        CurrentTime                                                             :  { state-fluent, int, default = 1};
 
         // number of shares owned
-        Shares(stock)                                              :  { state-fluent, real, default = 0 };
+        Shares(stock)                                                           :  { state-fluent, real, default = 0};
 
 
         //////////////////////////////
@@ -46,7 +62,7 @@ domain STOCK_model {
         //////////////////////////////
 
         // amount of shares to transfer
-        Transfer(stock, stock)                                     :  { action-fluent, real, default = 0 };
+        Transfer(stock, stock)                                                  :  { action-fluent, real, default = 0};
 
 
         //////////////////////////////
@@ -59,25 +75,32 @@ domain STOCK_model {
         // interm fluents
         ////////////////////////////////////
 
-        // Buy/Sell Commission
-        Commition(int price) = COMMISION-RATE() * price;
+        // Buy Commission
+        BuyCommission(price) = price * BUY-COMMISSION-RATE();
 
+        // Sell Commission
+        SellCommission(price) = price * SELL-COMMISSION-RATE();
+
+        // Total transfer Commission
+        TotalCommission(price) = BuyCommission(price) + SellCommission(price);
+
+        // Money from stock transfer
+        MoneyTransfer(?s1, ?s2) = Transfer(?s1, ?s2) * STOCK-PRICE(?s1, CurrentTime);
+        
 
         ////////////////////////////////////
         // State space evolution
         ////////////////////////////////////
 
         // Time evolution
-        CurrentTime'() = CurrentTime() + 1;
+        CurrentTime' = NEXT(CurrentTime);
 
         // Number of shares owned dynamic
-        Shares'(stock) = Shares(stock) + sum_{?s : stock} [ ((Transfer(?s, stock) * STOCK-PRICE(?s, CurrentTime()))/STOCK-PRICE(stock, CurrentTime())
-                                                             - 2 * Commission(Transfer(?s, stock) * STOCK-PRICE(?s, CurrentTime())))
-                                                            - ((Transfer(stock, ?s) * STOCK-PRICE(stock, CurrentTime()))/STOCK-PRICE(?s, CurrentTime())
-                                                               - 2 * Commission(Transfer(stock, ?s) * STOCK-PRICE(stock, CurrentTime()))) ];
-    }
+        Shares'(stock) = Shares(stock) + sum_{?s : stock} [ ((MoneyTransfer(?s, stock) - TotalCommission(MoneyTransfer(?s, stock)))/STOCK-PRICE(stock, CurrentTime))
+                                                            - ((MoneyTransfer(stock, ?s) - TotalCommission(MoneyTransfer(stock, ?s)))/STOCK-PRICE(?s, CurrentTime)) ];
+    };
 
-    reward = ( sum_{?s : stock} [ Shares'(?s) * (STOCK-PRICE(?s, CurrentTime'()) - STOCK-PRICE(?s, CurrentTime())) ] );
+    reward = sum_{?s : stock} [ Shares'(?s) * (STOCK-PRICE(?s, CurrentTime') - STOCK-PRICE(?s, CurrentTime)) ];
 
     action-preconditions {
 		forall_{?s1 : stock, ?s2 : stock} [ Transfer(?s1, ?s2) <= Shares(?s1) ];
@@ -85,6 +108,6 @@ domain STOCK_model {
 
     state-invariants {
         forall_{?s : stock} [ Shares(?s) >= 0 ];
-        forall_{?s : stock, ?t : int} [ STOCK-PRICE(?s, ?t) >= 0 ];
+        //forall_{?s : stock, ?t : int} [ STOCK-PRICE(?s, ?t) >= 0 ];
 	};
 }
