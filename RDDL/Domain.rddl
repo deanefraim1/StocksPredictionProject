@@ -51,7 +51,7 @@ domain STOCK_model {
         //////////////////////////////
 
         // current time
-        CurrentTime                                                             :  { state-fluent, int, default = 1};
+        CurrentTime                                                             :  { state-fluent, time, default = t1};
 
         // number of shares owned
         Shares(stock)                                                           :  { state-fluent, real, default = 0};
@@ -96,8 +96,8 @@ domain STOCK_model {
         CurrentTime' = NEXT(CurrentTime);
 
         // Number of shares owned dynamic
-        Shares'(stock) = Shares(stock) + sum_{?s : stock} [ ((MoneyTransfer(?s, stock) - TotalCommission(MoneyTransfer(?s, stock)))/STOCK-PRICE(stock, CurrentTime'))
-                                                            - ((MoneyTransfer(stock, ?s) - TotalCommission(MoneyTransfer(stock, ?s)))/STOCK-PRICE(?s, CurrentTime')) ];
+        Shares'(?stock) = Shares(?stock) + sum_{?s : stock} [ ((MoneyTransfer(?s, ?stock) - TotalCommission(MoneyTransfer(?s, ?stock)))/STOCK-PRICE(?stock, CurrentTime'))
+                                                            - ((MoneyTransfer(?stock, ?s) - TotalCommission(MoneyTransfer(?stock, ?s)))/STOCK-PRICE(?s, CurrentTime')) ];
     };
 
     reward = sum_{?s : stock} [ Shares'(?s) * (STOCK-PRICE(?s, CurrentTime') - STOCK-PRICE(?s, CurrentTime)) ];

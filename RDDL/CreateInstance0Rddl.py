@@ -7,7 +7,7 @@ secondStockSymbol = "TMF"
 stock1InitAmount = 100
 stock2InitAmount = 100
 
-startDate = "2000-01-01"
+startDate = "2010-01-01"
 endDate = pd.to_datetime('today').strftime('%Y-%m-%d')
 
 buyCommissionRate = 0.01
@@ -51,7 +51,7 @@ def CreateTimesListString(fileData: pd.DataFrame): # create a string of {t0, t1,
     NumberOfRows = GetNumberOfRows(fileData)
     timesListString = ""
     for i in range(NumberOfRows):
-        timesListString += "t" + str(i) + ", "
+        timesListString += "t" + str(i + 1) + ", "
     timesListString = timesListString[:-2]
     return timesListString
 
