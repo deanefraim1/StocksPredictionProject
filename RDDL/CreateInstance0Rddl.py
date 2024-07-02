@@ -44,7 +44,7 @@ def CreatePricesList(fileData: pd.DataFrame, stockName): # create a string of {p
     avg_prices = ((open_prices + close_prices) / 2).round(3)
     nextTimeBoolsString = ""
     for i in range(len(avg_prices) - 1):
-        nextTimeBoolsString += "STOCK-PRICE(" + stockName + ", " + str(i+1) + ")" + "           = " + str(avg_prices.iloc[i]) + ";\n        "
+        nextTimeBoolsString += "STOCK-PRICE(" + stockName + ", t" + str(i+1) + ")" + "           = " + str(avg_prices.iloc[i]) + ";\n        "
     return nextTimeBoolsString
 
 def CreateTimesListString(fileData: pd.DataFrame): # create a string of {t0, t1, t2, ..., tN}

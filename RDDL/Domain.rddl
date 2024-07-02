@@ -5,6 +5,7 @@ domain STOCK_model {
 
     types {
         stock : object;
+        time : object;
     };
 
     pvariables {
@@ -12,8 +13,11 @@ domain STOCK_model {
         // non-fluents == topology and geometry
         ///////////////////////////////////////////
 
+        // is the time index last in the queue, i,e., maximum delay memory depth
+        IS-FINAL-TIME(time)                                                     :  {non-fluent, bool, default = false };
+
         // stock price
-        STOCK-PRICE(stock, int)                                                :  { non-fluent, real, default = 0 };
+        STOCK-PRICE(stock, time)                                                :  { non-fluent, real, default = 0 };
 
         // Buy Commission Rate
         BUY-COMMISSION-RATE                                                     :  { non-fluent, real, default = 0 };
@@ -21,19 +25,22 @@ domain STOCK_model {
         // Sell Commission Rate
         SELL-COMMISSION-RATE                                                    :  { non-fluent, real, default = 0 };
 
+        // Next time dynamics
+        NEXT(time)                                                              :  { non-fluent, time, default = t1 };
+
 
         //////////////////////////////
         // interm fluents
         //////////////////////////////
 
         // Buy Commission
-        BuyCommission(real)                                                    :  { interm-fluent, real };
+        BuyCommission(price)                                                    :  { interm-fluent, real };
 
         // Sell Commission
-        SellCommission(real)                                                   :  { interm-fluent, real };
+        SellCommission(price)                                                   :  { interm-fluent, real };
 
         // Toal transfer Commission
-        TotalCommission(real)                                                  :  { interm-fluent, real };
+        TotalCommission(price)                                                  :  { interm-fluent, real };
 
         // Money from stock transfer
         MoneyTransfer(stock, stock)                                             :  { interm-fluent, real };
@@ -44,7 +51,7 @@ domain STOCK_model {
         //////////////////////////////
 
         // current time
-        CurrentTime                                                             :  { state-fluent, int, default = 1};
+        CurrentTime                                                             :  { state-fluent, time, default = t1};
 
         // number of shares owned
         Shares(stock)                                                           :  { state-fluent, real, default = 0};
@@ -61,7 +68,6 @@ domain STOCK_model {
         //////////////////////////////
         // observation fluents
         //////////////////////////////
-        
     };
 
     cpfs {
@@ -87,11 +93,11 @@ domain STOCK_model {
         ////////////////////////////////////
 
         // Time evolution
-        CurrentTime' = CurrentTime + 1;
+        CurrentTime' = NEXT(CurrentTime);
 
         // Number of shares owned dynamic
         Shares'(?stock) = Shares(?stock) + sum_{?s : stock} [ ((MoneyTransfer(?s, ?stock) - TotalCommission(MoneyTransfer(?s, ?stock)))/STOCK-PRICE(?stock, CurrentTime'))
-                                                             - ((MoneyTransfer(?stock, ?s) - TotalCommission(MoneyTransfer(?stock, ?s)))/STOCK-PRICE(?s, CurrentTime')) ];
+                                                            - ((MoneyTransfer(?stock, ?s) - TotalCommission(MoneyTransfer(?stock, ?s)))/STOCK-PRICE(?s, CurrentTime')) ];
     };
 
     reward = sum_{?s : stock} [ Shares'(?s) * (STOCK-PRICE(?s, CurrentTime') - STOCK-PRICE(?s, CurrentTime)) ];
