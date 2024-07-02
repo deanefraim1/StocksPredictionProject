@@ -13,9 +13,6 @@ domain STOCK_model {
         // non-fluents == topology and geometry
         ///////////////////////////////////////////
 
-        // is the time index last in the queue, i,e., maximum delay memory depth
-        IS-FINAL-TIME(time)                                                     :  {non-fluent, bool, default = false };
-
         // stock price
         STOCK-PRICE(stock, time)                                                :  { non-fluent, real, default = 0 };
 
@@ -34,13 +31,13 @@ domain STOCK_model {
         //////////////////////////////
 
         // Buy Commission
-        BuyCommission(price)                                                    :  { interm-fluent, real };
+        BuyCommission(stock, stock)                                                    :  { interm-fluent, real };
 
         // Sell Commission
-        SellCommission(price)                                                   :  { interm-fluent, real };
+        SellCommission(stock, stock)                                                   :  { interm-fluent, real };
 
         // Toal transfer Commission
-        TotalCommission(price)                                                  :  { interm-fluent, real };
+        TotalCommission(stock, stock)                                                  :  { interm-fluent, real };
 
         // Money from stock transfer
         MoneyTransfer(stock, stock)                                             :  { interm-fluent, real };
@@ -76,13 +73,13 @@ domain STOCK_model {
         ////////////////////////////////////
 
         // Buy Commission
-        BuyCommission(price) = price * BUY-COMMISSION-RATE;
+        BuyCommission(?s1, ?s2) = Transfer(?s1, ?s2) * STOCK-PRICE(?s1, CurrentTime) * BUY-COMMISSION-RATE;
 
         // Sell Commission
-        SellCommission(price) = price * SELL-COMMISSION-RATE;
+        SellCommission(?s1, ?s2) = Transfer(?s1, ?s2) * STOCK-PRICE(?s1, CurrentTime) * SELL-COMMISSION-RATE;
 
         // Total transfer Commission
-        TotalCommission(price) = BuyCommission(price) + SellCommission(price);
+        TotalCommission(?s1, ?s2) = BuyCommission(?s1, ?s2) + SellCommission(?s1, ?s2);
 
         // Money from stock transfer
         MoneyTransfer(?s1, ?s2) = Transfer(?s1, ?s2) * STOCK-PRICE(?s1, CurrentTime);
@@ -96,8 +93,8 @@ domain STOCK_model {
         CurrentTime' = NEXT(CurrentTime);
 
         // Number of shares owned dynamic
-        Shares'(?stock) = Shares(?stock) + sum_{?s : stock} [ ((MoneyTransfer(?s, ?stock) - TotalCommission(MoneyTransfer(?s, ?stock)))/STOCK-PRICE(?stock, CurrentTime'))
-                                                            - ((MoneyTransfer(?stock, ?s) - TotalCommission(MoneyTransfer(?stock, ?s)))/STOCK-PRICE(?s, CurrentTime')) ];
+        Shares'(?stock) = Shares(?stock) + sum_{?s : stock} [ ((MoneyTransfer(?s, ?stock) - TotalCommission(?s, ?stock))/STOCK-PRICE(?stock, CurrentTime))
+                                                            - ((MoneyTransfer(?stock, ?s) - TotalCommission(?s, ?stock))/STOCK-PRICE(?s, CurrentTime)) ];
     };
 
     reward = sum_{?s : stock} [ Shares'(?s) * (STOCK-PRICE(?s, CurrentTime') - STOCK-PRICE(?s, CurrentTime)) ];

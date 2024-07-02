@@ -8,7 +8,6 @@ non-fluents twoNegetiveCorrelatedStocks_non-fluents {
 
     non-fluents {
         // time properties
-        IS-FINAL-TIME($finalTime) = true;
         {$nextTimeDynamicsList}
 
         // commission rates

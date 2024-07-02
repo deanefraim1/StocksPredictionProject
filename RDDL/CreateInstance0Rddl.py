@@ -23,7 +23,6 @@ stock1InitAmountVar = "$stock1InitAmount"
 stock2InitAmountVar = "$stock2InitAmount"
 RddlStock1PricesVar = "{$stock1Prices}"
 RddlStock2PricesVar = "{$stock2Prices}"
-RddlFinalTimeVar = "$finalTime"
 RddlHorizonVar = "$horizon"
 RddlNextTimeBoolsVar = "{$nextTimeDynamicsList}"
 RddlBuyCommissionRateVar = "$buyCommissionRate"
@@ -73,7 +72,6 @@ def GenerateRddlFromStockData(rddlTemplateFilePath, firstStockData: pd.DataFrame
     rddlTemplate = rddlTemplate.replace(stock2InitAmountVar, str(stock2InitAmount))
     rddlTemplate = rddlTemplate.replace(RddlStock1PricesVar, CreatePricesList(firstStockData, firstStockSymbol))
     rddlTemplate = rddlTemplate.replace(RddlStock2PricesVar, CreatePricesList(secondStockData, secondStockSymbol))
-    rddlTemplate = rddlTemplate.replace(RddlFinalTimeVar, "t" + str(GetNumberOfRows(firstStockData)))
     rddlTemplate = rddlTemplate.replace(RddlHorizonVar, str(GetNumberOfRows(firstStockData)))
     rddlTemplate = rddlTemplate.replace(RddlNextTimeBoolsVar, CreateNextTimeBoolsString(firstStockData))
     rddlTemplate = rddlTemplate.replace(RddlBuyCommissionRateVar, str(buyCommissionRate))
