@@ -43,14 +43,14 @@ def CreatePricesList(fileData: pd.DataFrame, stockName): # create a string of {p
     avg_prices = ((open_prices + close_prices) / 2).round(3)
     nextTimeBoolsString = ""
     for i in range(len(avg_prices) - 1):
-        nextTimeBoolsString += "STOCK-PRICE(" + stockName + ", t" + str(i+1) + ")" + "           = " + str(avg_prices.iloc[i]) + ";\n        "
+        nextTimeBoolsString += "STOCK-PRICE(" + stockName + ", " + str(i+1) + ")" + "           = " + str(avg_prices.iloc[i]) + ";\n        "
     return nextTimeBoolsString
 
 def CreateTimesListString(fileData: pd.DataFrame): # create a string of {t0, t1, t2, ..., tN}
     NumberOfRows = GetNumberOfRows(fileData)
     timesListString = ""
     for i in range(NumberOfRows):
-        timesListString += "t" + str(i + 1) + ", "
+        timesListString += str(i + 1) + ", "
     timesListString = timesListString[:-2]
     return timesListString
 
@@ -58,7 +58,7 @@ def CreateNextTimeBoolsString(file: pd.DataFrame): # create a string of NEXT(t0,
     NumberOfRows = GetNumberOfRows(file)
     nextTimeBoolsString = ""
     for i in range(NumberOfRows - 1):
-        nextTimeBoolsString += "NEXT(t" + str(i + 1) + ")" + "           = t" + str(i + 2) + ";\n        "
+        nextTimeBoolsString += "NEXT(" + str(i + 1) + ")" + "           = " + str(i + 2) + ";\n        "
     return nextTimeBoolsString
 
 def GenerateRddlFromStockData(rddlTemplateFilePath, firstStockData: pd.DataFrame, secondStockData: pd.DataFrame, instanceName): # replace {variables} with the actual values
