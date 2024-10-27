@@ -5,7 +5,7 @@ domain STOCK_model {
 
     types {
         stock : object;
-        time : int{1..10000};
+        time : object;
     };
 
     pvariables {
@@ -22,7 +22,8 @@ domain STOCK_model {
         // Sell Commission Rate
         SELL-COMMISSION-RATE                                                    :  { non-fluent, real, default = 0 };
 
-        //TERMINAL-TIME(time)                                                      :  { non-fluent, bool, default = false };
+        // Next time dynamics
+        NEXT(time)                                                              :  { non-fluent, time, default = t1 };
 
 
         //////////////////////////////
@@ -47,7 +48,7 @@ domain STOCK_model {
         //////////////////////////////
 
         // current time
-        CurrentTime                                                             :  { state-fluent, int, default = 1};
+        CurrentTime                                                             :  { state-fluent, time, default = t1};
 
         // number of shares owned
         Shares(stock)                                                           :  { state-fluent, real, default = 0};
@@ -89,7 +90,7 @@ domain STOCK_model {
         ////////////////////////////////////
 
         // Time evolution
-        CurrentTime' = CurrentTime + 1;
+        CurrentTime' = NEXT(CurrentTime);
 
         // Number of shares owned dynamic
         Shares'(?stock) = Shares(?stock) + sum_{?s : stock} [ ((MoneyTransfer(?s, ?stock) - TotalCommission(?s, ?stock))/STOCK-PRICE(?stock, CurrentTime))
