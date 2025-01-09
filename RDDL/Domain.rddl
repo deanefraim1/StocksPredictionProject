@@ -30,12 +30,6 @@ domain STOCK_model {
         // interm fluents
         //////////////////////////////
 
-        // Buy Commission
-        BuyCommission(stock, stock)                                             :  { interm-fluent, real };
-
-        // Sell Commission
-        SellCommission(stock, stock)                                            :  { interm-fluent, real };
-
         // Toal transfer Commission
         TotalCommission(stock, stock)                                           :  { interm-fluent, real };
 
@@ -74,17 +68,12 @@ domain STOCK_model {
         // interm fluents
         ////////////////////////////////////
 
-        // Buy Commission
-        BuyCommission(?s1, ?s2) = Transfer(?s1, ?s2) * CurrentTimeStockPrice(?s1) * BUY-COMMISSION-RATE;
-
-        // Sell Commission
-        SellCommission(?s1, ?s2) = Transfer(?s1, ?s2) * CurrentTimeStockPrice(?s1) * SELL-COMMISSION-RATE;
-
         // Total transfer Commission
-        TotalCommission(?s1, ?s2) = BuyCommission(?s1, ?s2) + SellCommission(?s1, ?s2);
+        TotalCommission(?sellStock, ?buyStock) = MoneyTransfer(?sellStock, ?buyStock) * (BUY-COMMISSION-RATE + SELL-COMMISSION-RATE);
 
-        // Money from stock transfer
-        MoneyTransfer(?s1, ?s2) = Transfer(?s1, ?s2) * CurrentTimeStockPrice(?s1);
+        // The money from stock transfer 
+        MoneyTransfer(?sellStock, ?buyStock) = Transfer(?sellStock, ?buyStock) * CurrentTimeStockPrice(?sellStock);
+
 
         // CurrentTimeStockPrice
         CurrentTimeStockPrice(?s) = (sum_{?t : time} [ CurrentTime(?t) * STOCK-PRICE(?s, ?t) ]);
@@ -97,20 +86,23 @@ domain STOCK_model {
         CurrentTime'(?t2) = (sum_{?t1 : time} [ CurrentTime(?t1) * NEXT(?t1, ?t2) ]) > 0;
 
         // Number of shares owned dynamic
-        Shares'(?stock) = Shares(?stock) + sum_{?s : stock} [ ((MoneyTransfer(?s, ?stock) - TotalCommission(?s, ?stock))/CurrentTimeStockPrice(?stock))
-                                                            - ((MoneyTransfer(?stock, ?s) - TotalCommission(?s, ?stock))/CurrentTimeStockPrice(?s)) ];
-
-                                                            
+        Shares'(?currStock) = Shares(?currStock) + sum_{?otherStock : stock} [ ((MoneyTransfer(?otherStock, ?currStock) - TotalCommission(?otherStock, ?currStock))/CurrentTimeStockPrice(?currStock))
+                                                                               - ((MoneyTransfer(?currStock, ?otherStock) - TotalCommission(?currStock, ?otherStock))/CurrentTimeStockPrice(?otherStock)) 
+                                                                             ];
+                                          
     };
 
-    reward = sum_{?s : stock} [ Shares'(?s) * ((sum_{?t : time} [ CurrentTime'(?t) * STOCK-PRICE(?s, ?t) ]) - CurrentTimeStockPrice(?s)) ];
+    reward = (sum_{?s : stock} [ Shares'(?s) * (sum_{?t : time} [ CurrentTime'(?t) * STOCK-PRICE(?s, ?t) ]) ])
+             - (sum_{?s : stock} [ Shares(?s) * (sum_{?t : time} [ CurrentTime(?t) * STOCK-PRICE(?s, ?t) ]) ]); 
 
     action-preconditions {
-		forall_{?s1 : stock, ?s2 : stock} [ Transfer(?s1, ?s2) <= Shares(?s1) ];
-	};
+        forall_{?s1 : stock} [ (sum_{?s2 : stock} [ Transfer(?s1, ?s2) ]) - Shares(?s1) <= 0.0 ];
+        forall_{?s1 : stock, ?s2 : stock} [ Transfer(?s1, ?s2) >= 0.0 ];
+        (sum_{?s : stock} [ Transfer(?s, ?s) ]) >= 0.0;
+        (sum_{?s : stock} [ Transfer(?s, ?s) ]) <=  0.0;
+    };
 
     state-invariants {
-        forall_{?s : stock} [ Shares(?s) >= 0 ];
-        //forall_{?s : stock, ?t : int} [ STOCK-PRICE(?s, ?t) >= 0 ];
+        forall_{?s : stock} [ Shares(?s) >= 0.0 ];
 	};
 }
