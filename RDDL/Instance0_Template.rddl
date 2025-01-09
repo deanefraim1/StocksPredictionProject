@@ -27,7 +27,7 @@ instance twoNegetiveCorrelatedStocks_instance0 {
     init-state{
 		Shares($stock1Symbol) = $stock1InitAmount;
 		Shares($stock2Symbol) = $stock2InitAmount;
-        CurrentTime = t1;
+        CurrentTime(t1) = true;
 	};
     horizon = $horizon;
     discount = 1.0;

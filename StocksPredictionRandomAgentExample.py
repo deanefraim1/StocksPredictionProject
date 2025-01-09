@@ -16,11 +16,13 @@ for step in range(myEnv.horizon):
     next_state, reward, done, info, _ = myEnv.step(action)
     total_reward += reward
     print()
-    print(f'step       = {step}')
-    print(f'state      = {state}')
-    print(f'action     = {action}')
-    print(f'next state = {next_state}')
-    print(f'reward     = {reward}')
+    print(f'Step                            = {step}')
+    print(f'Current Time                    = {next(key for key, value in state.items() if value)}')
+    print(f'Current Time Shares Status      = {list(state.items())[-2:]}')
+    print(f'action                          = {action}')
+    print(f'Next Time                       = {next(key for key, value in next_state.items() if value)}')
+    print(f'Next Time Shares Status         = {list(next_state.items())[-2:]}')
+    print(f'reward                          = {reward}')
     state = next_state
     if done:
         break
