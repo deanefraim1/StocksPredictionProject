@@ -96,13 +96,13 @@ domain STOCK_model {
              - (sum_{?s : stock} [ Shares(?s) * (sum_{?t : time} [ CurrentTime(?t) * STOCK-PRICE(?s, ?t) ]) ]); 
 
     action-preconditions {
-        forall_{?s1 : stock} [ (sum_{?s2 : stock} [ Transfer(?s1, ?s2) ]) - Shares(?s1) <= 0.0 ];
-        forall_{?s1 : stock, ?s2 : stock} [ Transfer(?s1, ?s2) >= 0.0 ];
-        (sum_{?s : stock} [ Transfer(?s, ?s) ]) >= 0.0;
+        forall_{?s1 : stock} [ (sum_{?s2 : stock} [ Transfer(?s1, ?s2) ]) - Shares(?s1) <= 0.0 ]; // This condition is to ensure that we are not transferring more shares than we have
+        forall_{?s1 : stock, ?s2 : stock} [ Transfer(?s1, ?s2) >= 0.0 ]; // This condition is to ensure that we are not transferring negative shares
+        (sum_{?s : stock} [ Transfer(?s, ?s) ]) >= 0.0; // This condition and the next one are to ensure that we are not transferring from one stock to the same stock
         (sum_{?s : stock} [ Transfer(?s, ?s) ]) <=  0.0;
     };
 
     state-invariants {
-        forall_{?s : stock} [ Shares(?s) >= 0.0 ];
+        forall_{?s : stock} [ Shares(?s) >= 0.0 ]; // This condition is to ensure that we are not owning negative shares
 	};
 }
