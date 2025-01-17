@@ -10,8 +10,8 @@ stock2InitAmount = 100
 startDate = "2010-01-01"
 endDate = pd.to_datetime('today').strftime('%Y-%m-%d')
 
-buyCommissionRate = 0.01
-sellCommissionRate = 0.01
+buyCommissionRate = 0
+sellCommissionRate = 0
 
 TemplateInstanceFilePath = 'RDDL/Instance0_Template.rddl'
 InstanceFilePath = 'RDDL/Instance0.rddl'
