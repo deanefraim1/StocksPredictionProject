@@ -4,14 +4,15 @@ import yfinance as yf
 firstStockSymbol = "UPRO"
 secondStockSymbol = "TMF"
 
-stock1InitAmount = 100
-stock2InitAmount = 100
+# Total amount of money to invest is 1,774.8$
+stock1InitAmount = 100 # UPRO initial price is 2.173$
+stock2InitAmount = 20 # TMF initial price is 77.875$
 
 startDate = "2010-01-01"
 endDate = pd.to_datetime('today').strftime('%Y-%m-%d')
 
-buyCommissionRate = 0
-sellCommissionRate = 0
+buyCommissionRate = 0.0001
+sellCommissionRate = 0.0001
 
 TemplateInstanceFilePath = 'RDDL/Instance0_Template.rddl'
 InstanceFilePath = 'RDDL/Instance0.rddl'

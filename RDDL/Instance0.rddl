@@ -3793,8 +3793,8 @@ non-fluents twoNegetiveCorrelatedStocks_non-fluents {
         
 
         // commission rates
-        BUY-COMMISSION-RATE = 0;
-        SELL-COMMISSION-RATE = 0;
+        BUY-COMMISSION-RATE = 0.0001;
+        SELL-COMMISSION-RATE = 0.0001;
 
         // stocks prices
         STOCK-PRICE(UPRO, t1)           = 2.173;
@@ -11374,7 +11374,7 @@ instance twoNegetiveCorrelatedStocks_instance0 {
     max-nondef-actions = pos-inf;
     init-state{
 		Shares(UPRO) = 100;
-		Shares(TMF) = 100;
+		Shares(TMF) = 20;
         CurrentTime(t1) = true;
 	};
     horizon = 3783;
