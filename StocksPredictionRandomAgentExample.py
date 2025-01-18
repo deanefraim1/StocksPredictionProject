@@ -1,19 +1,25 @@
 import pyRDDLGym
 from pyRDDLGym.core.policy import RandomAgent, NoOpAgent
+from pyRDDLGym_jax.core.planner import (load_config, JaxBackpropPlanner, JaxOfflineController)
 
 domainPath = 'RDDL/Domain.rddl'
 instancePath = 'RDDL/Instance0.rddl'
+configPath = 'stocksPrediction.cfg'
 
 myEnv = pyRDDLGym.make(domain=domainPath, instance=instancePath)
 
 agent = RandomAgent(action_space=myEnv.action_space, num_actions=myEnv.max_allowed_actions, seed=42)
 noOpAgent = NoOpAgent(action_space=myEnv.action_space, num_actions=myEnv.max_allowed_actions)
 
+planner_args, _, train_args = load_config(configPath)
+planner = JaxBackpropPlanner(rddl=myEnv.model, **planner_args)
+jaxAgent = JaxOfflineController(planner, **train_args)
+
 total_reward = 0
 state, _ = myEnv.reset()
 for step in range(myEnv.horizon):
     myEnv.render(to_display=False)
-    action = agent.sample_action()
+    action = jaxAgent.sample_action()
     next_state, reward, done, info, _ = myEnv.step(action)
     total_reward += reward
     print()
