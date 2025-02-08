@@ -18,6 +18,7 @@ from torch.distributions import MultivariateNormal
 from collections import OrderedDict
 from torch.optim import RMSprop
 from torch.utils.tensorboard import SummaryWriter
+import helpers
 
 class PPO:
 	"""
@@ -218,7 +219,7 @@ class PPO:
 
 			# Reset the environment. sNote that obs is short for observation. 
 			obs, _ = self.env.reset()
-			obs = self.extract_features_as_numpyArray(obs)
+			obs = helpers.TransformPyRddlStateToPPOState(obs)
 			done = False
 
 			# Run an episode for a maximum of max_timesteps_per_episode timesteps
@@ -230,13 +231,13 @@ class PPO:
 				t += 1 # Increment timesteps ran this batch so far
 
 				# Track observations in this batch
-				batch_obs.append(obs)
+				batch_obs.append(np.array(obs))
 
 				# Calculate action and make a step in the env. 
 				# Note that rew is short for reward.
 				action, log_prob = self.get_action(obs)
-				obs, rew, terminated, truncated, _ = self.env.step(self.numpyArray_to_action(self.env.action_space, action))
-				obs = self.extract_features_as_numpyArray(obs)
+				obs, rew, terminated, truncated, _ = self.env.step(helpers.TransformPPOActionToPyRddlAction(self.env.action_space, action))
+				obs = helpers.TransformPyRddlStateToPPOState(obs)
 
 				# Don't really care about the difference between terminated or truncated in this, so just combine them
 				done = terminated | truncated
@@ -265,50 +266,6 @@ class PPO:
 		self.logger['batch_lens'] = batch_lens
 
 		return batch_obs, batch_acts, batch_log_probs, batch_rtgs, batch_lens
-	
-	def numpyArray_to_action(self, action_space, action):
-		"""
-			Converts a numpy array to an action dictionary.
-
-			Parameters:
-				action - the numpy array to convert
-
-			Return:
-				action_dict - the action dictionary
-		"""
-		# Get the keys from the action space than zero the 0, and 3rd index and insert the action in the 1st and 2nd index
-		action_keys = list(action_space.keys())
-		action_values = [0, action[0], action[1], 0]
-		
-		# Create an OrderedDict by pairing keys and values
-		action_dict = OrderedDict(zip(action_keys, action_values))
-		
-		return action_dict
-	
-	def extract_features_as_numpyArray(self, obs: dict) -> np.ndarray:
-		"""
-			Extracts features from the observation.
-
-			Parameters:
-				obs - observation to pass as input
-
-			Return:
-				features - the features extracted from the observation
-		"""
-		# Extract time value
-		time_value = None
-		for key, value in obs.items():
-			if key.startswith("CurrentTime___t") and value:
-				time_value = int(key.split("___t")[1])
-				break
-
-		# Extract the last two numbers
-		stocks = list(obs.values())[-2:]
-
-		# Create the tensor of positive integers
-		result_array = np.array([time_value] + stocks, dtype=np.float32)
-
-		return result_array
 
 	def compute_rtgs(self, batch_rews):
 		"""

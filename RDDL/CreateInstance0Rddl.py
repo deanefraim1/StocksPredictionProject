@@ -73,7 +73,7 @@ def GenerateRddlFromStockData(rddlTemplateFilePath, firstStockData: pd.DataFrame
     rddlTemplate = rddlTemplate.replace(stock2InitAmountVar, str(stock2InitAmount))
     rddlTemplate = rddlTemplate.replace(RddlStock1PricesVar, CreatePricesList(firstStockData, firstStockSymbol))
     rddlTemplate = rddlTemplate.replace(RddlStock2PricesVar, CreatePricesList(secondStockData, secondStockSymbol))
-    rddlTemplate = rddlTemplate.replace(RddlHorizonVar, str(GetNumberOfRows(firstStockData)))
+    rddlTemplate = rddlTemplate.replace(RddlHorizonVar, str(GetNumberOfRows(firstStockData) - 1))
     rddlTemplate = rddlTemplate.replace(RddlNextTimeBoolsVar, CreateNextTimeBoolsString(firstStockData))
     rddlTemplate = rddlTemplate.replace(RddlBuyCommissionRateVar, str(buyCommissionRate))
     rddlTemplate = rddlTemplate.replace(RddlSellCommissionRateVar, str(sellCommissionRate))

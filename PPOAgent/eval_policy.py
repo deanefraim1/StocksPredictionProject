@@ -7,8 +7,9 @@
 """
 from collections import OrderedDict
 import numpy as np
+import helpers
 
-def _log_summary(ep_len, ep_ret, ep_num):
+def _log_summary(ep_len, ep_ret):
 		"""
 			Print to stdout what we've logged so far in the most recent episode.
 
@@ -24,7 +25,7 @@ def _log_summary(ep_len, ep_ret, ep_num):
 
 		# Print logging statements
 		print(flush=True)
-		print(f"-------------------- Episode #{ep_num} --------------------", flush=True)
+		print(f"-------------------- Episode Results --------------------", flush=True)
 		print(f"Episodic Length: {ep_len}", flush=True)
 		print(f"Episodic Return: {ep_ret}", flush=True)
 		print(f"------------------------------------------------------", flush=True)
@@ -50,84 +51,50 @@ def rollout(policy, env, render):
 			If you're unfamiliar with Python "yield", check this out:
 				https://stackoverflow.com/questions/231767/what-does-the-yield-keyword-do
 	"""
-	# Rollout until user kills process
-	while True:
-		obs, _ = env.reset()
-		obs = extract_features_as_numpyArray(obs)
-		done = False
+	obs, _ = env.reset()
+	done = False
 
-		# number of timesteps so far
-		t = 0
+	# number of timesteps so far
+	t = 0
 
-		# Logging data
-		ep_len = 0            # episodic length
-		ep_ret = 0            # episodic return
+	# Logging data
+	ep_len = 0            # episodic length
+	ep_ret = 0            # episodic return
 
-		while not done:
-			t += 1
+	while not done:
+		t += 1
 
-			# Render environment if specified, off by default
-			if render:
-				env.render()
+		# Render environment if specified, off by default
+		if render:
+			env.render()
 
-			# Query deterministic action from policy and run it
-			action = policy(obs).detach().numpy()
-			obs, rew, terminated, truncated, _ = env.step(numpyArray_to_action(env.action_space, action))
-			obs = extract_features_as_numpyArray(obs)
-			done = terminated | truncated
+		# Query deterministic action from policy and run it
+		action = policy(helpers.TransformPyRddlStateToPPOState(obs)).detach().numpy()
+		nextObs, rew, terminated, truncated, _ = env.step(helpers.TransformPPOActionToPyRddlAction(env.action_space, action))
 
-			# Sum all episodic rewards as we go along
-			ep_ret += rew
-			
-		# Track episodic length
-		ep_len = t
+		# Sum all episodic rewards as we go along
+		ep_ret += rew
+		
+		print()
+		print(f'Step                            = {t}')
+		print(f'Current Time                    = {next(key for key, value in obs.items() if value)}')
+		print(f'Current Time Shares Status      = {list(obs.items())[-2:]}')
+		print(f'action                          = {action}')
+		print(f'Next Time                       = {next(key for key, value in nextObs.items() if value)}')
+		print(f'Next Time Shares Status         = {list(nextObs.items())[-2:]}')
+		print(f'reward                          = {rew}')
+		print(f'total_reward                    = {ep_ret}')
 
-		# returns episodic length and return in this iteration
-		yield ep_len, ep_ret
+		obs = nextObs
+		done = terminated | truncated
 
-def numpyArray_to_action(action_space, action):
-	"""
-		Converts a numpy array to an action dictionary.
+		
+		
+	# Track episodic length
+	ep_len = t
 
-		Parameters:
-			action - the numpy array to convert
-
-		Return:
-			action_dict - the action dictionary
-	"""
-	# Get the keys from the action space than zero the 0, and 3rd index and insert the action in the 1st and 2nd index
-	action_keys = list(action_space.keys())
-	action_values = [0, action[0], action[1], 0]
-	
-	# Create an OrderedDict by pairing keys and values
-	action_dict = OrderedDict(zip(action_keys, action_values))
-	
-	return action_dict
-
-def extract_features_as_numpyArray(obs: dict) -> np.ndarray:
-	"""
-		Extracts features from the observation.
-
-		Parameters:
-			obs - observation to pass as input
-
-		Return:
-			features - the features extracted from the observation
-	"""
-	# Extract time value
-	time_value = None
-	for key, value in obs.items():
-		if key.startswith("CurrentTime___t") and value:
-			time_value = int(key.split("___t")[1])
-			break
-
-	# Extract the last two numbers
-	stocks = list(obs.values())[-2:]
-
-	# Create the tensor of positive integers
-	result_array = np.array([time_value] + stocks, dtype=np.float32)
-
-	return result_array
+	# returns episodic length and return in this iteration
+	return ep_len, ep_ret
 
 def eval_policy(policy, env, render=False):
 	"""
@@ -146,6 +113,6 @@ def eval_policy(policy, env, render=False):
 
 		NOTE: To learn more about generators, look at rollout's function description
 	"""
-	# Rollout with the policy and environment, and log each episode's data
-	for ep_num, (ep_len, ep_ret) in enumerate(rollout(policy, env, render)):
-		_log_summary(ep_len=ep_len, ep_ret=ep_ret, ep_num=ep_num)
+	# Rollout with the policy and environment, and log the episode's data
+	ep_len, ep_ret = rollout(policy, env, render)
+	_log_summary(ep_len=ep_len, ep_ret=ep_ret)
