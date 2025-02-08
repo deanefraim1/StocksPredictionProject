@@ -74,7 +74,7 @@ class PPO:
 
 		# Initialize TensorBoard SummaryWriter
 		current_dir = os.path.dirname(os.path.abspath(__file__))
-		log_dir = os.path.join(current_dir, 'runs', 'ppo_experiment')
+		log_dir = os.path.join(current_dir, 'TensorBoardFiles')
 		self.writer = SummaryWriter(log_dir=log_dir)
 		self.global_step = 0  # You can update this counter every update step
 
