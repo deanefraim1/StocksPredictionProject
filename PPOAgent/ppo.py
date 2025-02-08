@@ -178,8 +178,9 @@ class PPO:
 
 			# Save our model if it's time
 			if i_so_far % self.save_freq == 0:
-				torch.save(self.actor.state_dict(), './ppo_actor.pth')
-				torch.save(self.critic.state_dict(), './ppo_critic.pth')
+				current_dir = os.path.dirname(os.path.abspath(__file__))
+				torch.save(self.actor.state_dict(), os.path.join(current_dir, 'Models', 'ppo_actor.pth'))
+				torch.save(self.critic.state_dict(), os.path.join(current_dir, 'Models', 'ppo_critic.pth'))
 
 	def rollout(self):
 		"""
