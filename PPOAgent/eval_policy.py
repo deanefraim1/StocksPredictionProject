@@ -97,7 +97,7 @@ def numpyArray_to_action(action_space, action):
 	"""
 	# Get the keys from the action space than zero the 0, and 3rd index and insert the action in the 1st and 2nd index
 	action_keys = list(action_space.keys())
-	action_values = [0, max(action[0], 0), max(action[1], 0), 0]
+	action_values = [0, action[0], action[1], 0]
 	
 	# Create an OrderedDict by pairing keys and values
 	action_dict = OrderedDict(zip(action_keys, action_values))

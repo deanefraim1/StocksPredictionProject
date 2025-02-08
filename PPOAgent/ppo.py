@@ -11,9 +11,12 @@ import numpy as np
 import time
 import torch
 import torch.nn as nn
+import torch.nn.init as init
 from torch.optim import Adam
 from torch.distributions import MultivariateNormal
 from collections import OrderedDict
+from torch.optim import RMSprop
+from torch.utils.tensorboard import SummaryWriter
 
 class PPO:
 	"""
@@ -46,10 +49,13 @@ class PPO:
 		 # Initialize actor and critic networks
 		self.actor = policy_class(self.obs_dim, self.act_dim)                                                   # ALG STEP 1
 		self.critic = policy_class(self.obs_dim, 1)
+		
+		self.actor.apply(init_weights_xavier)
+		self.critic.apply(init_weights_xavier)
 
 		# Initialize optimizers for actor and critic
-		self.actor_optim = Adam(self.actor.parameters(), lr=self.lr)
-		self.critic_optim = Adam(self.critic.parameters(), lr=self.lr)
+		self.actor_optim = RMSprop(self.actor.parameters(), lr=self.lr)
+		self.critic_optim = RMSprop(self.critic.parameters(), lr=self.lr)
 
 		# Initialize the covariance matrix used to query the actor for actions
 		self.cov_var = torch.full(size=(self.act_dim,), fill_value=0.5)
@@ -64,6 +70,10 @@ class PPO:
 			'batch_rews': [],       # episodic returns in batch
 			'actor_losses': [],     # losses of actor network in current iteration
 		}
+
+		# Initialize TensorBoard SummaryWriter
+		self.writer = SummaryWriter(log_dir="runs/ppo_experiment")
+		self.global_step = 0  # You can update this counter every update step
 
 	def learn(self, total_timesteps):
 		"""
@@ -131,12 +141,31 @@ class PPO:
 				# Calculate gradients and perform backward propagation for actor network
 				self.actor_optim.zero_grad()
 				actor_loss.backward(retain_graph=True)
+				# Log the gradients of the actor network and the weights histogram
+				for name, param in self.actor.named_parameters():
+					# Log the weights histogram
+					self.writer.add_histogram(f"Weights/{name}", param, self.global_step)
+					if param.grad is not None:
+						grad_norm = param.grad.norm().item()
+						self.writer.add_scalar(f"Gradient_norm/{name}", grad_norm, self.global_step)
 				self.actor_optim.step()
 
 				# Calculate gradients and perform backward propagation for critic network
 				self.critic_optim.zero_grad()
 				critic_loss.backward()
+				# Log the gradients of the actor network and the weights histogram
+				for name, param in self.critic.named_parameters():
+					# Log the weights histogram
+					self.writer.add_histogram(f"Weights/{name}", param, self.global_step)
+					if param.grad is not None:
+						grad_norm = param.grad.norm().item()
+						self.writer.add_scalar(f"Gradient_norm/{name}", grad_norm, self.global_step)
 				self.critic_optim.step()
+
+				self.global_step += 1  # Increment the step counter for TensorBoard logging
+
+				# Optionally flush the writer (especially if you want to see updates frequently)
+				self.writer.flush()
 
 				# Log actor loss
 				self.logger['actor_losses'].append(actor_loss.detach())
@@ -245,7 +274,7 @@ class PPO:
 		"""
 		# Get the keys from the action space than zero the 0, and 3rd index and insert the action in the 1st and 2nd index
 		action_keys = list(action_space.keys())
-		action_values = [0, max(action[0], 0), max(action[1], 0), 0]
+		action_values = [0, action[0], action[1], 0]
 		
 		# Create an OrderedDict by pairing keys and values
 		action_dict = OrderedDict(zip(action_keys, action_values))
@@ -447,3 +476,11 @@ class PPO:
 		self.logger['batch_lens'] = []
 		self.logger['batch_rews'] = []
 		self.logger['actor_losses'] = []
+		self.logger['actor_grad_norms'] = []
+		self.logger['critic_grad_norms'] = []
+
+def init_weights_xavier(m):
+	if isinstance(m, nn.Linear):
+		init.xavier_uniform_(m.weight)
+		if m.bias is not None:
+			nn.init.zeros_(m.bias)
