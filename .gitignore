@@ -4,3 +4,4 @@ StocksPredictionProject.code-workspace
 /PPOAgent/TensorBoardFiles/
 /PPOAgent/__pycache__/
 /PPOAgent/Models/
+/PPOAgent/ResultsFiles/

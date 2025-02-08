@@ -8,6 +8,8 @@
 from collections import OrderedDict
 import numpy as np
 import helpers
+import matplotlib.pyplot as plt
+import os
 
 def _log_summary(ep_len, ep_ret):
 		"""
@@ -61,6 +63,10 @@ def rollout(policy, env, render):
 	ep_len = 0            # episodic length
 	ep_ret = 0            # episodic return
 
+	# Containers for plotting:
+	reward_history = []   # To store cumulative reward at each step
+	actions_hist = None   # To collect action values per key (will become a dict of lists)
+
 	while not done:
 		t += 1
 
@@ -70,16 +76,24 @@ def rollout(policy, env, render):
 
 		# Query deterministic action from policy and run it
 		action = policy(helpers.TransformPyRddlStateToPPOState(obs)).detach().numpy()
-		nextObs, rew, terminated, truncated, _ = env.step(helpers.TransformPPOActionToPyRddlAction(env.action_space, action))
+		pyrddlActionDict = helpers.TransformPPOActionToPyRddlAction(env.action_space, action)
+		nextObs, rew, terminated, truncated, _ = env.step(pyrddlActionDict)
 
 		# Sum all episodic rewards as we go along
 		ep_ret += rew
+
+		reward_history.append(ep_ret)
+
+		if actions_hist is None:
+			actions_hist = {key: [] for key in pyrddlActionDict}
+		for key in pyrddlActionDict:
+			actions_hist[key].append(pyrddlActionDict[key])
 		
 		print()
 		print(f'Step                            = {t}')
 		print(f'Current Time                    = {next(key for key, value in obs.items() if value)}')
 		print(f'Current Time Shares Status      = {list(obs.items())[-2:]}')
-		print(f'action                          = {action}')
+		print(f'action                          = {pyrddlActionDict}')
 		print(f'Next Time                       = {next(key for key, value in nextObs.items() if value)}')
 		print(f'Next Time Shares Status         = {list(nextObs.items())[-2:]}')
 		print(f'reward                          = {rew}')
@@ -88,7 +102,36 @@ def rollout(policy, env, render):
 		obs = nextObs
 		done = terminated | truncated
 
-		
+	# 1. Plot the total (cumulative) reward over time.
+	fig, ax1 = plt.subplots(figsize=(10, 5))
+	ax1.plot(range(1, t + 1), reward_history, color='blue', label='Total Reward')
+	ax1.set_xlabel('Step')
+	ax1.set_ylabel('Total Reward', color='blue')
+	ax1.tick_params(axis='y', labelcolor='blue')
+	ax1.set_title('Total Reward over Time')
+	ax1.legend()
+	current_dir = os.path.dirname(os.path.abspath(__file__))
+	resultsDir = os.path.join(current_dir, 'ResultsFiles', 'reward_plot.png')
+	plt.savefig(resultsDir)
+	plt.close(fig)
+
+	# 2. Plot histograms for each action key.
+	if actions_hist is not None:
+		keys = list(actions_hist.keys())
+		num_keys = len(keys)
+		# Arrange histograms in a grid; for 4 keys, a 2x2 grid works well.
+		fig, axs = plt.subplots(2, 2, figsize=(12, 10))
+		axs = axs.flatten()  # To simplify the loop
+		for i, key in enumerate(keys):
+			axs[i].hist(actions_hist[key], bins=100, edgecolor='black', alpha=0.7)
+			axs[i].set_title(f'Histogram for {key}')
+			axs[i].set_xlabel('Value')
+			axs[i].set_ylabel('Frequency')
+		plt.tight_layout()
+		current_dir = os.path.dirname(os.path.abspath(__file__))
+		resultsDir = os.path.join(current_dir, 'ResultsFiles', 'action_histograms.png')
+		plt.savefig(resultsDir)
+		plt.close(fig)
 		
 	# Track episodic length
 	ep_len = t
