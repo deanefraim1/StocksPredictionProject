@@ -145,6 +145,8 @@ class PPO:
 				# Calculate gradients and perform backward propagation for actor network
 				self.actor_optim.zero_grad()
 				actor_loss.backward(retain_graph=True)
+				# Clip gradients to a maximum norm of 100
+				torch.nn.utils.clip_grad_norm_(self.actor.parameters(), max_norm=100)
 				# Log the gradients of the actor network and the weights histogram
 				for name, param in self.actor.named_parameters():
 					# Log the weights histogram
@@ -157,6 +159,8 @@ class PPO:
 				# Calculate gradients and perform backward propagation for critic network
 				self.critic_optim.zero_grad()
 				critic_loss.backward()
+				# Clip gradients to a maximum norm of 100
+				torch.nn.utils.clip_grad_norm_(self.critic.parameters(), max_norm=100)
 				# Log the gradients of the actor network and the weights histogram
 				for name, param in self.critic.named_parameters():
 					# Log the weights histogram
@@ -165,6 +169,9 @@ class PPO:
 						grad_norm = param.grad.norm().item()
 						self.writer.add_scalar(f"Gradient_norm/{name}", grad_norm, self.global_step)
 				self.critic_optim.step()
+
+				#evaluate the actor totalReward until done is reached
+				self.writer.add_scalar("Total Reward", self.evaluate_actor(), self.global_step)
 
 				self.global_step += 1  # Increment the step counter for TensorBoard logging
 
@@ -353,6 +360,33 @@ class PPO:
 		# Return the value vector V of each observation in the batch
 		# and log probabilities log_probs of each action in the batch
 		return V, log_probs
+	
+	def evaluate_actor(self):
+		obs, _ = self.env.reset()
+		done = False
+
+		# number of timesteps so far
+		t = 0
+
+		# Logging data
+		ep_ret = 0            # episodic return
+
+		while not done:
+			t += 1
+
+			# Query deterministic action from policy and run it
+			action = self.actor(helpers.TransformPyRddlStateToPPOState(obs)).detach().numpy()
+			pyrddlActionDict = helpers.TransformPPOActionToPyRddlAction(self.env.action_space, action)
+			nextObs, rew, terminated, truncated, _ = self.env.step(pyrddlActionDict)
+
+			# Sum all episodic rewards as we go along
+			ep_ret += rew
+
+			obs = nextObs
+			done = terminated | truncated
+
+		# returns episodic length and return in this iteration
+		return ep_ret
 
 	def _init_hyperparameters(self, hyperparameters):
 		"""
