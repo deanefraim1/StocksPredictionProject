@@ -12,6 +12,7 @@ import os
 import time
 import torch
 import torch.nn as nn
+import StateStacker
 import torch.nn.init as init
 from torch.optim import Adam
 from torch.distributions import MultivariateNormal
@@ -45,7 +46,7 @@ class PPO:
 
 		# Extract environment information
 		self.env = env
-		self.obs_dim = 3 # the time and the two stock prices
+		self.obs_dim = 6 # 2 stocks amounts for 3 time steps - i-2, i-1, i
 		self.act_dim = 2 # pass from one stock to the other and vice versa
 
 		 # Initialize actor and critic networks
@@ -220,13 +221,17 @@ class PPO:
 
 		t = 0 # Keeps track of how many timesteps we've run so far this batch
 
+		stateStacker = StateStacker.StateStacker()
+
 		# Keep simulating until we've run more than or equal to specified timesteps per batch
 		while t < self.timesteps_per_batch:
 			ep_rews = [] # rewards collected per episode
 
 			# Reset the environment. sNote that obs is short for observation. 
 			obs, _ = self.env.reset()
+			stateStacker.reset()
 			obs = helpers.TransformPyRddlStateToPPOState(obs)
+			obs = stateStacker.update(obs)
 			done = False
 
 			# Run an episode for a maximum of max_timesteps_per_episode timesteps
@@ -245,6 +250,7 @@ class PPO:
 				action, log_prob = self.get_action(obs)
 				obs, rew, terminated, truncated, _ = self.env.step(helpers.TransformPPOActionToPyRddlAction(self.env.action_space, action))
 				obs = helpers.TransformPyRddlStateToPPOState(obs)
+				obs = stateStacker.update(obs)
 
 				# Don't really care about the difference between terminated or truncated in this, so just combine them
 				done = terminated | truncated
@@ -363,6 +369,7 @@ class PPO:
 	
 	def evaluate_actor(self):
 		obs, _ = self.env.reset()
+		stateStacker = StateStacker.StateStacker()
 		done = False
 
 		# number of timesteps so far
@@ -375,7 +382,7 @@ class PPO:
 			t += 1
 
 			# Query deterministic action from policy and run it
-			action = self.actor(helpers.TransformPyRddlStateToPPOState(obs)).detach().numpy()
+			action = self.actor(stateStacker.update(helpers.TransformPyRddlStateToPPOState(obs))).detach().numpy()
 			pyrddlActionDict = helpers.TransformPPOActionToPyRddlAction(self.env.action_space, action)
 			nextObs, rew, terminated, truncated, _ = self.env.step(pyrddlActionDict)
 

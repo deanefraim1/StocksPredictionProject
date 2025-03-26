@@ -14,7 +14,7 @@ def TransformPyRddlStateToPPOState(obs: dict) -> torch.Tensor:
     stocks = list(obs.values())[-2:]
 
     # Create the tensor
-    result_tensor = torch.tensor([time_value] + stocks, dtype=torch.float32)
+    result_tensor = torch.tensor(stocks, dtype=torch.float32)
 
     return result_tensor
 
